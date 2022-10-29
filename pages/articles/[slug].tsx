@@ -1,6 +1,7 @@
-import React from 'react';
-import Markdoc from '@markdoc/markdoc';
-
+import React from "react";
+import Markdoc from "@markdoc/markdoc";
+import * as markdocTags from "../../markdoc/tags";
+import * as markdocNodes from "../../markdoc/nodes";
 import type {
   NextPage,
   InferGetServerSidePropsType,
@@ -11,7 +12,7 @@ import Layout from "../../components/Layout/Layout";
 import BioBar from "../../components/BioBar/BioBar";
 import prisma from "../../server/db/client";
 
-import Code from '../../components/Code/Code';
+import { markdocComponents } from "../../markdoc/components";
 
 const ArticlePage: NextPage = ({
   post,
@@ -56,9 +57,9 @@ const ArticlePage: NextPage = ({
             )}
 
             <article className="prose prose-invert">
-                {Markdoc.renderers.react(JSON.parse(post.body), React, { components: {
-                  Fence: Code
-                } })}
+              {Markdoc.renderers.react(JSON.parse(post.body), React, {
+                components: markdocComponents
+              })}
             </article>
           </section>
           <BioBar author={post.user} />
@@ -115,28 +116,24 @@ export const getServerSideProps = async (
     };
   }
 
-  const fence = {
-    render: 'Fence',
-    attributes: {
-      language: {
-        type: String
-      }
-    }
-  };
-
-  const content = JSON.stringify(Markdoc.transform(Markdoc.parse(post.body),{
-    nodes: {
-      fence
-    }
-  }))
-  // console.log(content);
   
+
+  const ast = Markdoc.parse(post.body)
+
+  const content = Markdoc.transform(ast, {
+    nodes: {
+      ...markdocNodes
+    },
+    tags: {
+      ...markdocTags
+    }
+  })
 
   return {
     props: {
       post: {
         ...post,
-        body: content,
+        body: JSON.stringify(content),
         tags,
       },
     },
